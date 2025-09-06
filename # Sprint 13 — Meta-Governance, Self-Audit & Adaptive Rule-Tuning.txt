@@ -1,0 +1,116 @@
+# Sprint 13 — Meta-Governance, Self-Audit & Adaptive Rule-Tuning
+
+## 1) System Health & Self-Audit
+
+**Goal:** EA evaluates itself, not just the market.
+
+**Features**
+
+* `meta.health` block expanded:
+
+  * `uptime_hours`, `last_snapshot_ok`, `last_journal_ok`.
+  * Task queue stats (from Sprint 10): % executed vs skipped.
+  * Error rate per module (indicators, IO, external feeds).
+* Weekly self-audit row in journal:
+
+  * Summarises errors, skipped tasks, uptime, schema compliance.
+* UI “Health Panel”: green/yellow/red system status.
+
+---
+
+## 2) Governance Rules & Enforcement
+
+**Goal:** enshrine safety & ethics.
+
+**Features**
+
+* Configurable **Governance Flags** in CONFIG\_DEFAULTS:
+
+  * `AllowHighRiskOverride` (false default).
+  * `MaxDailyTrades`.
+  * `EnableAutoResearchTrades` (always false until Sprint >20?).
+* EA logs governance state in `meta.governance{}` snapshot:
+
+  * `override_allowed`, `heat_cap_ok`, `trading_enabled`.
+* All overrides → explicit `event:"override"` journal rows with reason + operator.
+
+---
+
+## 3) Adaptive Rule-Tuning
+
+**Goal:** adjust *risk discipline* automatically when system underperforms.
+
+**Features**
+
+* Rolling performance monitor (expectancy, max DD).
+* If DD > X% or expectancy <0 → EA clamps risk% down (e.g., halve `DefaultRiskPct`).
+* Recovery mode: risk returns to normal only after N winners.
+* All adaptive actions logged: `event:"adaptive_tune"` with before/after values.
+
+---
+
+## 4) Ethical Constraints
+
+**Goal:** prevent misuse, enforce transparency.
+
+**Features**
+
+* Hardcoded: no hidden auto-trading (must be enabled in inputs).
+* No silent schema drift (schema bumps required).
+* Any external API use logged (`external.sources_used`).
+* Optional operator notes field in journal for manual annotation of ethics decisions.
+
+---
+
+## 5) Operator Feedback Loop
+
+* EA periodically asks for operator confirmation (“Continue with current governance settings?”).
+* UI provides one-click **Confirm / Adjust**.
+* Journal logs operator decisions as `event:"governance_confirm"`.
+* Builds an auditable trail of not just trades, but *discipline choices*.
+
+---
+
+# 🚦 Succinct Sprint-13 Checklist
+
+**Self-Audit**
+
+* [ ] meta.health expanded (uptime, task stats, error rates)
+* [ ] Weekly audit row in journal
+* [ ] UI Health Panel shows green/yellow/red
+
+**Governance**
+
+* [ ] Config flags: AllowHighRiskOverride, MaxDailyTrades, EnableAutoResearchTrades
+* [ ] meta.governance{} snapshot block
+* [ ] Overrides logged with operator + reason
+
+**Adaptive Rule-Tuning**
+
+* [ ] Rolling expectancy/DD monitor
+* [ ] Risk clamp on underperformance
+* [ ] Recovery mode after N winners
+* [ ] All changes journalled
+
+**Ethics**
+
+* [ ] No hidden auto-trading paths
+* [ ] No silent schema changes
+* [ ] All external API usage logged
+* [ ] Operator notes possible
+
+**Operator Feedback**
+
+* [ ] Periodic governance confirmation prompt
+* [ ] UI Confirm/Adjust panel
+* [ ] Journal logs governance\_confirm events
+
+**Acceptance**
+
+* [ ] EA reports its own reliability + health
+* [ ] Governance constraints enforced in telemetry + journal
+* [ ] Adaptive risk adjustments happen only under defined rules
+* [ ] Operator feedback loop logged for audit
+* [ ] No opaque behavior; all changes transparent
+
+---

@@ -1,0 +1,116 @@
+# Sprint 11 — Collaborative Networking & Multi-Node Operation
+
+## 1) Telemetry Sharing (Local → Remote)
+
+**Goal:** allow multiple operators or machines to view the same telemetry.
+
+**Features**
+
+* Optional `WebSocket` or `HTTP POST` bridge from EA → local server.
+* Journals and snapshots streamed into a central datastore (e.g., SQLite, Elastic, TimescaleDB).
+* UI can connect to either **local files** or **network endpoint**.
+* Configurable in `CONFIG_DEFAULTS` (`EnableNetworkBridge`, `BridgeURL`).
+* **Security:** simple token or API key; TLS if possible.
+
+---
+
+## 2) Multi-Node Journaling
+
+**Goal:** merge journals from several EAs or accounts.
+
+**Features**
+
+* Journals stamped with `{ account_id, node_id, symbol, tf }`.
+* Central aggregator merges streams into a single timeline.
+* `journal_index` monotonic per node, but global sequence assigned in aggregator.
+* Operator can filter by account/node in UI.
+
+---
+
+## 3) Distributed Risk Governance
+
+**Goal:** enforce risk discipline across multiple accounts or nodes.
+
+**Features**
+
+* Central service tracks **global heat caps** across all connected EAs.
+* If cap breached → sends “disable new trades” broadcast.
+* EA receives via bridge → sets `EnableTrading=false`, logs `event:"override" reason:"global_heat_cap"`.
+* Optional per-account caps still enforced locally.
+
+---
+
+## 4) Collaboration Features
+
+* **Shared annotations:** operator can tag journal events (e.g., “textbook pullback”, “bad exit”) and broadcast to all nodes.
+* **Operator notes panel**: stored in journal, visible in UI replay.
+* **Peer review mode:** two operators can mark trades “approved/denied” for training archives.
+
+---
+
+## 5) Offline Sync & Archiving
+
+* If network unavailable → EA writes normal local files.
+* When network restored → auto-sync backlog to central server.
+* Archive compression shipped nightly for backup.
+* `meta.sync_status` block in snapshots shows pending vs synced.
+
+---
+
+## 6) UI Enhancements
+
+* **Multi-node dashboard**: list active nodes, accounts, versions.
+* **Global risk panel**: daily/weekly R usage across all nodes.
+* **Filter bar**: node, account, symbol, session.
+* **Collaboration tools**: show annotations, comments, approvals.
+
+---
+
+# 🚦 Succinct Sprint-11 Checklist
+
+**Telemetry Sharing**
+
+* [ ] EA can push snapshots/journals to BridgeURL
+* [ ] Configurable inputs: EnableNetworkBridge, BridgeURL, APIKey
+* [ ] Local + remote simultaneously supported
+
+**Multi-Node Journals**
+
+* [ ] Journals stamped with node\_id, account\_id
+* [ ] Aggregator merges multiple feeds
+* [ ] UI can filter by node/account
+
+**Distributed Risk**
+
+* [ ] Central risk tracker aggregates open R
+* [ ] Global caps enforced via disable-trade signal
+* [ ] EA logs override events when blocked
+
+**Collaboration**
+
+* [ ] Operator annotations broadcast + journalled
+* [ ] Notes panel in UI
+* [ ] Peer review approvals recorded
+
+**Offline Sync**
+
+* [ ] EA caches telemetry if offline
+* [ ] Syncs backlog on reconnect
+* [ ] Snapshots stamped with sync\_status
+
+**UI**
+
+* [ ] Multi-node dashboard
+* [ ] Global risk usage panel
+* [ ] Filters (node/account/symbol/session)
+* [ ] Annotations + review tools
+
+**Acceptance**
+
+* [ ] Multi-node journals merge cleanly
+* [ ] Global risk cap enforcement works in real-time
+* [ ] Operators see all nodes in one UI
+* [ ] Offline → online sync seamless
+* [ ] Collaboration features journalled + reproducible
+
+---

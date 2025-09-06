@@ -1,0 +1,110 @@
+# Sprint 6 — Packaging, Documentation & Orchestration
+
+## 1) Packaging & Distribution
+
+* **Bundle structure**:
+
+  * `/Experts/EchoBlackboxEA.mq5`
+  * `/Include/telemetry/*.mqh`
+  * `/Files/ui/` (snapshots)
+  * `/Files/journal/` (JSONL)
+  * `/Files/state/` (indexes, peaks)
+  * `/docs/` (Master Prompt, Instructions, Checklists, UI Contract, Schemas)
+* **ZIP packaging script**: generate `ECHO_BLACKBOX_RELEASE_vX.Y.zip` with readme + changelog.
+* **Readme.md**: instructions for setup, inputs, file paths, and UI viewer usage.
+* **CHANGELOG.txt**: auto-updated at each sprint milestone.
+
+---
+
+## 2) Documentation & Training
+
+* **Operator manual** (Markdown/PDF):
+
+  * How to install the EA.
+  * How to read UI tabs.
+  * How to interpret edge cases & confluence.
+  * Journaling → performance stats.
+* **Developer notes**:
+
+  * File/module responsibilities.
+  * Schema versioning rules.
+  * Instructions for extending engines/patterns.
+* **Quick-start guide**: “compile, attach to chart, open `ui/` JSON.”
+
+---
+
+## 3) Multi-Symbol / Multi-Timeframe Orchestration
+
+* Add `SymbolsTimeframes[]` input (already defined in CONFIG\_DEFAULTS).
+* Orchestrator sweeps through list on timer:
+
+  * For each symbol/TF: compute indicators + snapshot.
+  * Write separate JSON files (`EURUSD_H1_telemetry.json`).
+* Journal all events into **one combined JSONL** (with `symbol` field).
+* Ensure `journal_index` stays monotonic across all symbols.
+
+---
+
+## 4) Reproducibility & Archiving
+
+* **Rotation & archive compression**:
+
+  * Daily journals zipped into `/journal/archive/YYYY-MM-DD.zip`.
+* **Schema locking**: snapshot/journal always stamped; UI branches on schema version.
+* **Hash checks**: compute hash of configs + monolith → embed in `meta.monolith_hash`.
+* **Backups**: optional push of daily bundles to a safe directory.
+
+---
+
+## 5) Collaboration & Extension Hooks
+
+* Add `Plugins` include folder: future modules can hook into `OnTimer` loop without touching core.
+* Define `struct TelemetryPlugin { bool (*Init)(); bool (*Run)(); bool (*Shutdown)(); }`
+* Allow loading of optional modules (future expansion).
+* Document contribution workflow.
+
+---
+
+# 🚦 Succinct Sprint-6 Checklist
+
+**Packaging**
+
+* [ ] Release ZIP bundle script
+* [ ] README.md with operator install/use
+* [ ] CHANGELOG auto-updated
+
+**Docs**
+
+* [ ] Operator manual (install, interpret, manage)
+* [ ] Developer notes (file structure, schema, style)
+* [ ] Quick-start guide (compile + run)
+
+**Orchestration**
+
+* [ ] Multi-symbol sweeping implemented
+* [ ] Multiple snapshots written (one per symbol/TF)
+* [ ] Unified journal JSONL (with symbol field)
+* [ ] Monotonic journal\_index across symbols
+
+**Archiving**
+
+* [ ] Journal daily rotation → zipped archives
+* [ ] Schema/version stamps consistent
+* [ ] Config + monolith hash embedded
+* [ ] Archive/backup optional
+
+**Collaboration**
+
+* [ ] Plugin struct defined
+* [ ] External modules can register safely
+* [ ] Contribution workflow documented
+
+**Acceptance**
+
+* [ ] Release ZIP builds reproducibly from repo
+* [ ] Journals archivable, reproducible
+* [ ] Multi-symbol telemetry stable
+* [ ] Operator + developer docs complete
+* [ ] Ready to share with collaborators
+
+---

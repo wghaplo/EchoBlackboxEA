@@ -1,0 +1,133 @@
+# Sprint 12 — Advanced Research, Benchmarking & Edge Discovery
+
+## 1) Research Data Pipeline
+
+**Goal:** make historical data easily queryable for analysis.
+
+**Features**
+
+* Export journals + snapshots into structured DB (SQLite / Timescale).
+* Schema aligns with `snapshot@1.3` & `journal@1.3`.
+* Provide scripts/tools for:
+
+  * Trade chains (setup → fill → exit).
+  * Edge case activations with outcome stats.
+  * Confluence scores vs results.
+* Standard CSV/Parquet exports for ML pipelines.
+
+---
+
+## 2) Strategy Benchmarking Framework
+
+**Goal:** compare “what if” playbooks against live/journal data.
+
+**Features**
+
+* Define **alt-strategies**: e.g.,
+
+  * “Swing only when confluence ≥0.9”
+  * “Scalp only in London session”
+  * “Exclude Edge Cases family C”
+* Backtest alt-strategies over archived journals.
+* Report KPIs (win rate, expectancy, DD, payoff, Sharpe-like).
+* UI Benchmark tab: select strategy filters → compare curves side by side.
+
+---
+
+## 3) Machine-Learning Integrations
+
+**Goal:** allow ML to explore confluence patterns & predict outcomes.
+
+**Features**
+
+* Export ML-ready features:
+
+  * Component scores per trade.
+  * Patterns (candles/harmonics).
+  * Edge case family activations.
+  * Session & news context.
+* Labels: outcome R, MAE/MFE, exit reason.
+* Provide Python notebooks (Jupyter) with baseline ML workflows:
+
+  * Logistic regression → win probability.
+  * Random forest / gradient boosting → feature importances.
+  * Neural nets (optional) for sequential confluence patterns.
+
+---
+
+## 4) Automated Edge Discovery
+
+**Goal:** surface recurring conditions that precede profitable setups.
+
+**Features**
+
+* Statistical scans: “When confluence.momentum >0.7 AND Edge Case=Liq Sweep → win rate 68%, avg R=1.3.”
+* Cluster analysis on patterns: group trades by similarity, identify high-performing clusters.
+* Surfaced edges flagged into UI as **Hypotheses**.
+* Stored in `/docs/research/edges.json`.
+
+---
+
+## 5) Research Dashboard (UI)
+
+* New tab: **Research & Edges**
+
+  * Trade cluster explorer (scatterplot of confluence vs R).
+  * Feature importance panel (ML results).
+  * Edge hypotheses list (with emoji + conditions).
+  * “Backtest Alt-Strategy” controls → run filter & see metrics.
+
+---
+
+## 6) Governance for ML
+
+* **Manual approval required**: EA never auto-trades from ML suggestions.
+* **All hypotheses logged**: journal `event:"research_hypothesis"` with score + rationale.
+* **Transparency first**: ML outputs treated as **advisory**, not as automation.
+
+---
+
+# 🚦 Succinct Sprint-12 Checklist
+
+**Research Data**
+
+* [ ] Journals & snapshots export to DB/CSV/Parquet
+* [ ] Query scripts for trades, edges, confluence outcomes
+* [ ] Schema matches snapshot\@1.3/journal\@1.3
+
+**Benchmarking**
+
+* [ ] Alt-strategy filters configurable
+* [ ] Backtest engine runs filters on archive
+* [ ] KPIs computed (win%, expectancy, DD, payoff, Sharpe)
+* [ ] UI Benchmark tab with side-by-side curves
+
+**ML Integrations**
+
+* [ ] Feature export (confluence, patterns, edge cases, sessions)
+* [ ] Label export (R, MAE/MFE, exit reason)
+* [ ] Jupyter notebooks with baseline ML pipelines
+* [ ] Results export back to UI
+
+**Edge Discovery**
+
+* [ ] Statistical scans for condition→outcome
+* [ ] Cluster analysis of trades
+* [ ] Hypotheses emitted to edges.json
+* [ ] UI shows hypotheses tab
+
+**Governance**
+
+* [ ] ML suggestions advisory only
+* [ ] Hypotheses logged in journal
+* [ ] Operator review required
+
+**Acceptance**
+
+* [ ] Archive→DB export reproducible
+* [ ] Benchmarking results align with journals
+* [ ] ML pipelines run out-of-box on exported data
+* [ ] UI surfaces hypotheses clearly
+* [ ] No automation from ML without operator
+
+---

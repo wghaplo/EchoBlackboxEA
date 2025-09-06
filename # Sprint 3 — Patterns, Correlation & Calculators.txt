@@ -1,0 +1,110 @@
+# Sprint 3 — Patterns, Correlation & Calculators
+
+This sprint deepens the telemetry — building the modules that make your system rich and operator-useful.
+
+## 1) Pattern Detection
+
+**File:** `/Include/telemetry/Patterns.mqh`
+
+* Implement candlestick recognizers: Engulfing, Hammer, Morning/Evening Star, Harami, Doji.
+* Each returns `{name, emoji, score, strength}`.
+* Optional stub for Harmonic patterns (Bat 🦇, Crab 🦀, etc.), returning placeholder scores.
+* Feed scores into `confluence.patterns` component.
+* Emit under `patterns{candles[], harmonics[]}` in snapshot.
+
+---
+
+## 2) Correlation Module
+
+**File:** `/Include/telemetry/Correlation.mqh`
+
+* Compute Pearson **r** between pairs in CONFIG (`CorrelationPairs`) over `CorrLookback`.
+* Optionally compute β (regression slope) and lagBars (cross-correlation).
+* Summarize alignment score (−1…+1).
+* Emit under `correlation{pairs[], confluence}`.
+* Raise “correlation\_follow” suggestions if leader/lagger misalignment detected.
+
+---
+
+## 3) Calculators Module
+
+**File:** `/Include/telemetry/Calculators.mqh`
+
+* Position size calculator: lots = equity × risk% / (SL\_pips × pip\_value).
+* What-if panel: entry, stop, TP array → lots, RR, expected PnL.
+* High-confluence overlay: if total ≥0.9, recommend increased risk (capped).
+* Kelly overlay (¼ Kelly for safety): requires sample stats from journal.
+* Heat calculator: daily/weekly R budgets → `can_open` flag.
+* Emit under `calculators{position_size, high_conviction, kelly, what_if, heat}`.
+
+---
+
+## 4) Session & External Hygiene
+
+**File:** `/Include/telemetry/Sessions.mqh`, `/Include/telemetry/External.mqh`
+
+* Sessions: compute Tokyo/London/NY blocks, overlaps, active now.
+* External: stub in news API fetch (config off by default).
+* Add `sessions{}` and `external{}` to snapshot.
+
+---
+
+## 5) JSON & UI Expansion
+
+* Snapshots: now include `patterns`, `correlation`, `calculators`, `sessions`, `external`.
+* Journals: echo calculator results at order/fill; attach pattern/correlation context.
+* UI can now populate:
+
+  * **Patterns page** (candles/harmonics chips).
+  * **Correlation Lab** (leader/lagger table).
+  * **Risk & Calculators** tab (lot sizing, heat, Kelly).
+  * **Sessions & News** bar.
+
+---
+
+# 🚦 Succinct Sprint-3 Checklist
+
+**Patterns**
+
+* [ ] Candlestick detectors implemented (Engulfing, Hammer, etc.)
+* [ ] Stub harmonics return objects with emoji + placeholder score
+* [ ] Scores integrated into confluence.patterns
+* [ ] Snapshot emits `patterns{candles[],harmonics[]}`
+
+**Correlation**
+
+* [ ] Pearson r for configured pairs
+* [ ] β and lagBars optional outputs
+* [ ] Alignment score computed
+* [ ] Suggestions array includes correlation\_follow notes
+* [ ] Snapshot emits `correlation{pairs[],confluence}`
+
+**Calculators**
+
+* [ ] Position size formula correct (lots = risk/equity per pip)
+* [ ] What-if function working (entry, stop, TP array)
+* [ ] High-confluence risk overlay (if confluence ≥0.9)
+* [ ] Kelly overlay (uses journal stats, safe quarter Kelly)
+* [ ] Heat calculator enforces daily/weekly R caps
+* [ ] Snapshot emits calculators object with all sub-blocks
+
+**Sessions & External**
+
+* [ ] Tokyo/London/NY block times computed
+* [ ] Overlaps detected, active sessions listed
+* [ ] External.news array (stubbed if no API)
+* [ ] Snapshot emits sessions{} and external{}
+
+**Integration**
+
+* [ ] Snapshots contain patterns, correlation, calculators, sessions, external
+* [ ] Journals echo calculators + patterns + correlation at order/fill
+* [ ] Schema stamps remain @1.3
+
+**Acceptance**
+
+* [ ] JSON validates against UI CONTRACT v1.2 (@1.3 schemas)
+* [ ] UI pages for Patterns, Correlation, Risk/Calculators, Sessions/News populate
+* [ ] No performance regression (keep within <5% CPU budget per cycle)
+
+---

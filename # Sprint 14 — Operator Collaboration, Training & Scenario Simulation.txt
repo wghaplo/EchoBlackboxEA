@@ -1,0 +1,112 @@
+# Sprint 14 — Operator Collaboration, Training & Scenario Simulation
+
+## 1) Shared Playbooks
+
+**Goal:** allow operators to co-develop and share tactical playbooks.
+
+**Features**
+
+* Store Playbooks in `/docs/playbooks/*.json` (Orientation, Swing, Scalp, Execution, Maintenance, Edge Cases).
+* Each playbook can be versioned (v1.0, v1.1).
+* Operators can load alternative playbooks into the EA at runtime (via `PlaybookFile` input).
+* UI shows which playbook version is active.
+* Journal logs `event:"playbook_load"` when new playbook activated.
+
+---
+
+## 2) Collaboration Features
+
+**Goal:** create multi-operator feedback loops.
+
+**Features**
+
+* Operator annotations broadcast via Sprint 11 network bridge.
+* UI allows operators to “like/dislike” trades → feedback journalled as `event:"operator_feedback"`.
+* Shared dashboard: see teammate comments, approvals, and flags in replay.
+* Consensus metrics: highlight trades where operator team was aligned vs split.
+
+---
+
+## 3) Training & Coaching Prompts
+
+**Goal:** help operators learn discipline and sharpen decision making.
+
+**Features**
+
+* EA/ UI generate *coaching prompts* at key events:
+
+  * “You overrode NO-GO with confluence=0.82. Was this justified?”
+  * “Heat cap breached. Would you still have taken this trade?”
+* Operator must tag response in UI (Yes/No/Comment).
+* Journal logs responses as `event:"training_prompt"`.
+
+---
+
+## 4) Scenario Simulation
+
+**Goal:** provide practice environments without risking live equity.
+
+**Features**
+
+* “Replay Mode”: UI plays back past market + telemetry, operator makes trade calls.
+* EA simulates fills and journals as if live (flagged `"simulated":true`).
+* “Scenario Cards”: predefined situations (Breakout Fail, Liquidity Sweep) loaded for operator to practice.
+* Score report: expectancy, accuracy, discipline index.
+
+---
+
+## 5) Operator Progress Dashboard
+
+* UI tab: **Training & Collaboration**
+
+  * Operator scorecards (accuracy, confluence alignment, override discipline).
+  * Heatmap of strengths/weaknesses (trend setups, volume plays, edge cases).
+  * Peer comparison (team aggregated vs individual).
+* Export training logs for coaching sessions.
+
+---
+
+# 🚦 Succinct Sprint-14 Checklist
+
+**Shared Playbooks**
+
+* [ ] Playbooks externalised in `/docs/playbooks/*.json`
+* [ ] Loadable at runtime via input
+* [ ] UI shows active playbook version
+* [ ] Journal logs playbook\_load events
+
+**Collaboration**
+
+* [ ] Operator annotations synced via network bridge
+* [ ] Feedback events (like/dislike, approve/deny) journalled
+* [ ] Shared dashboard in UI
+
+**Training Prompts**
+
+* [ ] Coaching prompts triggered at overrides & risk breaches
+* [ ] Operator responses logged as training\_prompt events
+* [ ] Responses stored in journal + replay
+
+**Scenario Simulation**
+
+* [ ] Replay Mode for archived data
+* [ ] Simulated fills flagged in journal
+* [ ] Scenario Cards implemented for tactical drills
+* [ ] Score report at end
+
+**Progress Dashboard**
+
+* [ ] Operator scorecards (accuracy, expectancy, discipline index)
+* [ ] Strength/weakness heatmap
+* [ ] Peer comparison mode
+* [ ] Exportable training logs
+
+**Acceptance**
+
+* [ ] Operators can swap/playbooks safely
+* [ ] Collaboration events visible in UI & journal
+* [ ] Training prompts integrated into workflow
+* [ ] Scenario practice yields reproducible scores
+* [ ] Operator progress dashboard complete
+
+---

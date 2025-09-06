@@ -1,0 +1,118 @@
+# Sprint 5 — Advanced Features & Integrations
+
+## 1) Harmonic Pattern Engine
+
+**File:** `/Include/telemetry/Patterns.mqh` (extended)
+
+* Add **Harmonic detectors** (Bat 🦇, Gartley 🦋, Crab 🦀, Butterfly 🦋, Shark, Cypher).
+* Detect via Fibonacci ratios and swing points (ZigZag basis).
+* Score = confidence (0–1) × alignment with bias.
+* Emit under `patterns.harmonics[]`:
+
+  ```json
+  { "name":"Bat", "emoji":"🦇", "score":0.6, "quality":0.75,
+    "legs": { "X":1.0930,"A":1.1000,"B":1.0970,"C":1.1020,"D":1.0955 } }
+  ```
+* Tie into **confluence.patterns** component.
+
+---
+
+## 2) AI/Anomaly Detection
+
+**File:** `/Include/telemetry/EdgeCases.mqh` (extended)
+
+* Implement “Adaptive/AI-driven anomalies”:
+
+  * Tick distribution oddities.
+  * Spoof/fakeout detection (rapid order-book like patterns, approximated from ticks).
+  * Volatility clustering anomalies.
+* Output as `edge_cases` with family=“Sentiment/External”, case=“Adaptive/AI-Driven Anomaly”.
+* Risk capped extra hard (≤0.10%).
+* Log requires operator confirmation (manual override flag).
+
+---
+
+## 3) External Data Integrations
+
+**Files:** `/Include/telemetry/External.mqh`
+
+* **News API**: integrate with configurable WebRequest (e.g., ForexFactory/FFCal JSON).
+
+  * Parse calendar events, map into `external.news[]`.
+  * Apply hygiene scoring: block trades around Tier-1.
+* **Sentiment feeds** (optional): e.g., retail long/short ratios.
+* **Correlation feeds**: cross-broker data for robustness.
+* Handle errors gracefully → `external.errors[]`.
+
+---
+
+## 4) Performance Dashboards
+
+**File:** `/Include/telemetry/Journal.mqh` (enriched)
+
+* Compute rolling stats (30-trade window):
+
+  * Expectancy, Sharpe-like metric, payoff ratio.
+  * Streak analysis.
+* Emit under `account.performance{}` block in snapshot.
+* Journal “summary” rows weekly for archive.
+
+**UI impact:** Operator sees evolving stats without needing external spreadsheet.
+
+---
+
+## 5) Visual & Operator Aids
+
+* **Chart overlay** (optional): draw emoji labels for mode, edge cases, or pattern detection (using `OBJ_LABEL` + Segoe UI Emoji).
+* **Operator alerts**: push notifications (configurable) when:
+
+  * Mode flips.
+  * Edge Case detected.
+  * Risk cap breached.
+* **Debug panel**: show config inputs, schema version, error counts.
+
+---
+
+# 🚦 Succinct Sprint-5 Checklist
+
+**Harmonics**
+
+* [ ] Bat, Crab, Gartley, Butterfly, Shark, Cypher implemented
+* [ ] Ratios validated against ZigZag points
+* [ ] Scores integrated into confluence.patterns
+* [ ] Snapshot emits harmonics\[] with legs and quality
+
+**AI/Anomalies**
+
+* [ ] Tick distribution monitor implemented
+* [ ] Spoof/fakeout detector (rapid wick pattern)
+* [ ] Edge case objects emitted with case=Adaptive/AI-Driven
+* [ ] Risk ≤0.10%, manual override required
+
+**External**
+
+* [ ] News API integration (calendar JSON fetch)
+* [ ] Sentiment feed optional input
+* [ ] Correlation cross-broker optional input
+* [ ] external.news\[] populated; errors\[] logged if fail
+
+**Performance Dashboards**
+
+* [ ] Rolling stats computed (expectancy, payoff, streaks)
+* [ ] account.performance{} emitted
+* [ ] Weekly summary rows journalled
+
+**Visual/Alerts**
+
+* [ ] Chart emoji overlay implemented (optional)
+* [ ] Push/email alerts for mode flips & edge cases
+* [ ] Debug panel with config & errors
+
+**Acceptance**
+
+* [ ] JSON validates with @1.3 schema extensions
+* [ ] UI shows harmonics, anomalies, performance stats
+* [ ] External API fails gracefully with warnings
+* [ ] Alerts/operator aids tested & logged
+
+---

@@ -1,0 +1,231 @@
+# ECHO BLACKBOX — DEVELOPMENT ROADMAP
+
+## Version 1.1 — Forward Trajectory (Sprints 1–15, Analyst/Orchestrator Model)
+
+---
+
+## RULE — DEVELOPMENT PHASE LOCK
+
+The EA may only be developed within the current sprint as defined in ROADMAP.txt.
+
+* No features or modules from future sprints may be introduced early.
+* Exceptions require explicit operator approval, documented as an override in CHANGELOG.txt.
+* Each sprint must end with an acceptance test and operator sign-off before progressing.
+
+---
+
+---
+
+### 🟢 Sprint 1 — Telemetry Heartbeat
+
+* Scaffold EA shell (OnInit, OnDeinit, OnTimer, OnTradeTransaction).
+* Emit minimal JSON snapshots (meta, orientation stub, indicators, account).
+* Append journal JSONL with orientation + trade events.
+* Atomic file writes; daily rotation.
+* Emoji dictionary + self-test.
+
+✅ Acceptance: EA compiles & emits valid snapshot\@1.3 + journal\@1.3 heartbeat.
+
+---
+
+### 🟡 Sprint 2 — Intelligence Layer (Analyst EA only)
+
+* Confluence engine (trend, momentum, volume, volatility, patterns, SR, session/news).
+* Levels module (pivots, nearest S/R, cluster score).
+* Edge Case families (Liquidity/Structure, Volatility/State, Sentiment/External).
+* Account telemetry (balance, equity, drawdown, risk budgets).
+* Output: `analysis.json` (analysis\@1.0).
+
+✅ Acceptance: Snapshots contain confluence, levels, edge\_cases, account.
+
+---
+
+### 🟠 Sprint 3 — Patterns, Correlation & Calculators (Analyst EA only)
+
+* Candlestick pattern detection; harmonics stub.
+* Correlation module (pairs, r, β, lag).
+* Calculators: lot size, what-if, Kelly, heat budgets.
+* Sessions (Tokyo/London/NY) + news hygiene (stub).
+* Schema bump: analysis\@1.1.
+
+✅ Acceptance: Snapshots expanded with patterns, correlation, calculators, sessions, external.
+
+---
+
+### 🔴 Sprint 4 — Journaling, Performance & Robustness (Analyst EA only)
+
+* Journal enrichment: MAE/MFE, bars held, exit reasons, overrides.
+* Performance optimization (caching, staggering, CPU budget).
+* Error handling & recovery (retries, state reload).
+* Governance inputs + audit logging.
+* Schema bump: journal\@1.4.
+
+✅ Acceptance: Stable 24h run, complete Analyst EA lifecycle journalled, operator sees health.
+
+---
+
+### 🟣 Sprint 5 — Advanced Features & Integrations (Analyst EA only)
+
+* Harmonic pattern engine (Bat, Crab, etc. — stub).
+* AI/anomaly detection (spoof/fakeout, volatility clustering).
+* External feeds: news API, sentiment, cross-broker correlation (stubs).
+* Performance dashboards (expectancy, payoff).
+* Schema bump: analysis\@1.2.
+
+✅ Acceptance: Analyst EA outputs enriched with harmonics, anomalies, external; still advisory-only.
+
+---
+
+### 🔵 Sprint 6 — Packaging & Orchestration (Orchestrator EA introduced)
+
+* Release ZIP bundle with docs, configs, schemas.
+* Operator manual + developer notes.
+* Introduce Orchestrator EA: reads analysis.json, applies guardrails (NO-GOs, daily risk).
+* Executes in **paper-trade mode** only: writes execution.json (orders\@1.0).
+* Daily archive rotation, schema locks, config hashes.
+
+✅ Acceptance: Distributable bundle reproducible; Orchestrator reads Analyst outputs and simulates orders correctly.
+
+---
+
+### 🟤 Sprint 7 — UI Integration & Operator Experience
+
+* Orientation compass & mode history.
+* Confluence matrix (TFs × engines).
+* Edge Cases panel grouped by family.
+* Account dashboard (balance, DD, risk budgets).
+* Journal explorer with filters.
+* Session/News bar + operator alerts.
+* Operator approvals persisted in ops.json (ops\@1.0), polled by Orchestrator.
+
+✅ Acceptance: UI fully operational console, schema-driven, alerts fire correctly, approvals toggle execution readiness.
+
+---
+
+### 🟩 Sprint 8 — Backtesting, Replay & Analytics
+
+* Journal replay engine for archived sessions.
+* Outcome attribution (Analyst signals vs Orchestrator executions).
+* Analytics: R distributions, scatter, Monte Carlo, session breakdowns.
+* Backtest harness (offline OHLC, replay mode).
+* UI analytics tab with charts & KPIs.
+
+✅ Acceptance: Replay reconstructs Analyst signals and Orchestrator executions; analytics consistent with journals.
+
+---
+
+### 🟧 Sprint 9 — Automation Bridges (Opt-In, Staged)
+
+#### 9.1 — Single-Orchestrator Automation (Opt-In)
+
+* Analyst EA flags `auto:true` signals.
+* Single Orchestrator EA can auto-execute flagged signals if operator permits.
+* Guardrails (NO-GOs, risk caps) enforced.
+  ✅ Acceptance: Auto-execution works for one symbol; all auto actions logged.
+
+#### 9.2 — Multi-Orchestrator Framework
+
+* Orchestrators can run in **symbol-specific mode** (one per chart).
+* Each reads only its slice of analysis.json.
+* Writes execution\_{SYMBOL}.json.
+  ✅ Acceptance: Multiple Orchestrators run concurrently, isolated per symbol.
+
+#### 9.3 — Global Risk Arbiter
+
+* Introduce risk.json (shared).
+* Aggregates account exposure, DD, correlation heat.
+* Orchestrators must respect arbiter before execution.
+  ✅ Acceptance: Cross-Orchestrator guardrails enforced; global DD respected.
+
+#### 9.4 — Semi-Auto Triggers
+
+* Edge cases or special signals may bypass approval (with strict constraints).
+* Logged as `"origin":"auto-edge-case"`.
+  ✅ Acceptance: Semi-auto triggers work under arbiter control; all logged.
+
+---
+
+### 🟨 Sprint 10 — Multi-Instance Scaling
+
+* Orchestrators scaled across many symbols/TFs.
+* Symbol scheduler (tiers, cadences).
+* Task queue with priority & CPU budget.
+* UI health: symbol cadences, task stats, CPU/time.
+
+✅ Acceptance: 10+ Orchestrators stable, journals unified, CPU < threshold.
+
+---
+
+### 🟦 Sprint 11 — Collaborative Networking
+
+* Telemetry sharing via WebSocket/HTTP bridge.
+* Multi-node journals with account\_id, node\_id.
+* Distributed risk caps enforced globally.
+* Operator annotations + peer review shared across nodes.
+* Offline sync with backlog replay.
+
+✅ Acceptance: Multi-node dashboard in UI, global risk enforced, sync seamless.
+
+---
+
+### 🟪 Sprint 12 — Research & Edge Discovery
+
+* Export Analyst signals + Orchestrator trades to DB/CSV/Parquet.
+* Benchmark alt-strategies on archives.
+* ML integrations (features from Analyst, labels from Orchestrator).
+* Automated edge discovery (glyph sequences → outcomes).
+* UI Research Library for hypotheses.
+
+✅ Acceptance: Research data reproducible; ML pipelines run; edges surfaced clearly.
+
+---
+
+### ⚫ Sprint 13 — Meta-Governance & Self-Audit
+
+* meta.health expansion (uptime, errors, tasks).
+* Governance flags: MaxDailyTrades, AllowHighRiskOverride, etc.
+* Adaptive risk clamp under drawdown.
+* Ethical constraints: no hidden auto-trading, no silent schema drift.
+* Analyst audits classification accuracy; Orchestrator audits execution reliability.
+* Operator feedback loop for governance confirmation.
+
+✅ Acceptance: EA self-reports reliability; adaptive governance logged; ethics enforced.
+
+---
+
+### 🟫 Sprint 14 — Collaboration & Training
+
+* Shared playbooks in JSON, loadable at runtime.
+* Multi-operator annotations, approvals, consensus metrics.
+* Coaching prompts at overrides/risk breaches.
+* Scenario simulation (Replay Mode, Scenario Cards).
+* Operator dashboards (accuracy, discipline index, peer comparison).
+
+✅ Acceptance: Operators train, collaborate, and track progress via UI & journals.
+
+---
+
+### 🟰 Sprint 15 — Institutional Desk Emulation
+
+* Multiple Analyst groups (Swing, Scalp, Edge, Research).
+* Symbol-specific Orchestrators enforce strategy risk locally.
+* Desk-level arbiter allocates risk globally.
+* Weekly adaptive ecosystem suggestions.
+* Research library catalogs validated edges.
+* Institutional allocation rings in UI.
+* Long-term governance: quarterly reviews, yearly archives, self-diagnostics.
+
+✅ Acceptance: Multi-strategy orchestration live; ecosystem suggestions logged; system resilient across years.
+
+---
+
+# ✅ Overall Trajectory
+
+Sprints 1–5 → Analyst EA foundation (telemetry, confluence, patterns).
+Sprints 6–10 → Orchestrator EA integration, packaging, UI, multi-symbol scaling.
+Sprints 11–15 → Collaboration, research, governance, institutional desk simulation.
+
+**End state:** Echo Blackbox = institutional-grade ecosystem:
+Analyst EA(s) generate signals → Orchestrator EA(s) execute under governance → UI supports operators → research/training layer refines edges → global desk-level governance ensures resilience.
+
+---

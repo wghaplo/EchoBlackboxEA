@@ -1,0 +1,190 @@
+# Sprint 2 — Intelligence Layer
+
+## 1) Confluence Engine (core of the system)
+
+**File:** `/Include/telemetry/Confluence.mqh`
+
+**Responsibilities**
+
+* Compute normalized scores (−1…+1) for each component:
+
+  * **Trend Integrity** (Ichimoku, EMA stack, ADX, RSI)
+  * **Momentum** (AO, AC, Stoch, W%R)
+  * **Volume Conviction** (OBV, MFI, FI)
+  * **Volatility & Feasibility** (ATR, StdDev, Spread)
+  * **Patterns** (candles/harmonics stubs)
+  * **S/R Confluence** (from Levels module)
+  * **Correlation Alignment** (from Correlation module, stubbed if not ready)
+  * **Session/News Hygiene**
+* Weighting: read from inputs (`w_trend`, `w_momentum`, etc.) in CONFIG\_DEFAULTS.
+* Clip each component score to \[−1,+1].
+* Compute weighted sum = `total`.
+* Output structure:
+
+  ```json
+  "confluence": {
+    "total": 0.65,
+    "components": {
+      "trend": 0.9,
+      "momentum": 0.4,
+      "volume": 0.6,
+      "volatility": 0.3,
+      "patterns": 0.1,
+      "sr": 0.2,
+      "correlation": 0.0,
+      "session_news": -0.2
+    }
+  }
+  ```
+
+**Mode Matrix**
+
+* If 8–10 checks align → 📈
+* If 6–7 align, ADX low but vol high → ⚡
+* If 4–5 align → ♻
+* If ≤3 or Hard NO-GO → ⛔
+  *Hard NO-GO checks remain non-negotiable.*
+
+---
+
+## 2) Levels Module (pivots & nearest S/R)
+
+**File:** `/Include/telemetry/Levels.mqh`
+
+**Responsibilities**
+
+* Daily pivots (Classic, Fib, optionally Camarilla/Woodie).
+* Nearest support/resistance with distance in pips, rank, and “near” flag.
+* Cluster score: if multiple levels within X pips, assign confluence.
+* Optional: anchored VWAP or ZigZag fractals for extra structure (future).
+
+**Output example**
+
+```json
+"levels": {
+  "pivots": { "classic": { "R1": 1.1023, "S1": 1.0945 } },
+  "nearest": {
+    "support": { "price": 1.0950, "rank": 2, "distance_pips": 5, "near": true },
+    "resistance": { "price": 1.1010, "rank": 1, "distance_pips": 7, "near": false }
+  },
+  "sr_confluence": { "score": 0.25, "explain": ["cluster of pivots near price"] }
+}
+```
+
+---
+
+## 3) Edge Case Detection (families + cases)
+
+**File:** `/Include/telemetry/EdgeCases.mqh`
+
+**Responsibilities**
+
+* Implement **Family gates** (Liquidity/Structure, Volatility/State, Sentiment/External).
+* Within each family, detect sub-cases (e.g., Liquidity Sweep, Void Fill, News Spike).
+* Scoring: return modest \[−0.5…+0.5] contribution to confluence.
+* Emit **edge\_cases array of objects**:
+
+  ```json
+  "edge_cases": [
+    { "family":"Liquidity/Structure", "case":"Liquidity Sweep", "emoji":"🧹", "score":0.62,
+      "conditions":["wick beyond prior low","OBV snap reversal"] }
+  ]
+  ```
+* Journaling: on activation, log `event:"setup"` with `edge_cases` context.
+* Risk: use caps from CONFIG (`EdgeRisk_Liq`, etc.).
+
+---
+
+## 4) Account Slice (full telemetry)
+
+**File:** `/Include/telemetry/Account.mqh`
+
+**Responsibilities**
+
+* Snapshot `balance`, `equity`, `margin`, `free_margin`, `floating_pnl`.
+* Drawdown struct: current %, max daily %, max to date.
+* Risk struct: open R, cum daily/weekly R, heat cap vs budget.
+* Optionally include open `positions[]` with ticket, symbol, side, lots, entry, SL/TP, pl\_money, pl\_r, mae\_pips, mfe\_pips, bars\_held.
+
+**Output example**
+
+```json
+"account": {
+  "balance": 10000.0,
+  "equity": 10080.0,
+  "margin": 150.0,
+  "free_margin": 9930.0,
+  "floating_pnl": 80.0,
+  "drawdown": { "current_pct": 0.5, "max_daily_pct": 1.2, "max_to_date_pct": 6.8 },
+  "risk": { "open_r": 0.8, "cum_day_r": 1.5, "cum_week_r": 2.3,
+            "heat_cap_pct": 5.0, "heat_cap_ok": true }
+}
+```
+
+---
+
+## 5) Schema & UI Integration
+
+* Update snapshots: now include `confluence`, `levels`, `edge_cases`, `account`.
+* Journal: include `confluence` + `edge_cases` per trade event.
+* Validate JSON against updated **UI CONTRACT @1.3**.
+* Add schema to every snapshot/journal row (`"schema":"snapshot@1.3"` / `"journal@1.3"`).
+
+---
+
+## 6) Testing & Acceptance (Sprint-2)
+
+* Snapshots now contain **non-empty confluence, levels, account**.
+* Edge cases populate realistically in backtest (or simulated with synthetic triggers).
+* Journals append `setup` events when edge cases trigger.
+* Validate outputs with UI prototype (Orientation page, Matrix grid, Account panel).
+* Stress test: run 24h, verify journal rotation, index monotonic, no missing schema.
+
+---
+
+# 🚦 Succinct Sprint-2 checklist
+
+**Confluence Engine**
+
+* [ ] Normalize scores for Trend, Momentum, Volume, Volatility
+* [ ] Integrate Patterns stub (candles only for now)
+* [ ] Integrate S/R from Levels
+* [ ] Apply weights from CONFIG\_DEFAULTS
+* [ ] Compute `total` and Mode Matrix
+* [ ] Enforce Hard NO-GOs
+
+**Levels Module**
+
+* [ ] Daily pivots (Classic/Fib)
+* [ ] Nearest S/R with distance, rank, near flag
+* [ ] Cluster confluence score
+
+**Edge Cases**
+
+* [ ] Family gates (Liquidity, Volatility, Sentiment)
+* [ ] Detect sub-cases (Sweep, Void, Breakout Failure, etc.)
+* [ ] Emit `edge_cases[]` objects with family/case/emoji/score/conditions
+* [ ] Cap risk per CONFIG (EdgeRisk\_\*)
+
+**Account Slice**
+
+* [ ] balance/equity/margin/free\_margin/floating\_pnl
+* [ ] Drawdown struct (current/daily/to-date)
+* [ ] Risk struct (openR, cumDayR, cumWeekR, heat cap)
+* [ ] Optional positions\[] snapshot
+
+**Integration**
+
+* [ ] Snapshots include confluence, levels, edge\_cases, account
+* [ ] Journals include confluence breakdown + edge\_cases for setup/order/fill/close
+* [ ] Schema stamps @1.3 present in every file
+
+**Acceptance**
+
+* [ ] JSON validates against UI CONTRACT
+* [ ] Non-empty confluence/levels/account in live run
+* [ ] Edge cases detected & journalled correctly
+* [ ] No schema/version mismatches
+* [ ] 24h stress test stable; rotation daily; index monotonic
+
+---

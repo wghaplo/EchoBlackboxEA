@@ -1,0 +1,177 @@
+# Sprint 9 — Automation Bridges & Semi-Autonomy (Opt-In)
+
+## 1) Execution Bridges (Guided → Semi-Auto)
+
+**Files:**
+
+* `/Include/telemetry/Bridge.Exec.mqh` (adapter)
+* `/Include/telemetry/Guardrails.mqh` (final checks)
+
+**What it adds**
+
+* **Guided Execution**: UI (or hotkey) sends an *intent* (BUY/SELL, entry/SL/TP). EA re-validates current telemetry (mode, NO-GOs, heat, spread) → **Confirm** or **Reject** with reason, then places order.
+* **Templates**: predefined order templates (Breakout, Retest, Fade) → fills missing params from calculators (lots, SL distance).
+* **Dry-Run Mode**: simulate fills; journal as `event:"execution"` with `"simulated":true`.
+
+**Guardrails**
+
+* Enforce **Hard NO-GOs** and **heat caps** regardless of intent.
+* **Latency/slippage** limits per symbol.
+* **Risk clamp**: never exceed calculators or EdgeRisk caps.
+* **Kill switch**: `EnableAutomation=false` stops all placements.
+
+---
+
+## 2) Semi-Auto Triggers (Narrow Scope)
+
+**Files:**
+
+* `/Include/telemetry/Auto.Triggers.mqh`
+
+**When allowed**
+
+* Only if `EnableSemiAuto=true` **and** Orientation ≠ ⛔ **and** no Tier-1 lockout.
+
+**Triggers**
+
+* **Edge-Case Micro-Fades**: allow *one-shot* limit with tight SL when a whitelisted case fires (e.g., Liquidity Sweep).
+* **Breakout Continuation**: place stop order at level when confluence ≥ threshold for N bars.
+* **Time-boxed**: auto-cancel in X minutes if not filled.
+
+**Risk discipline**
+
+* Uses **lowest of** (risk calculator, EdgeRisk\_\*, heat remaining).
+* No scaling in; no widening stops.
+* Every auto placement requires an **audit reason** in journal.
+
+---
+
+## 3) Trade Copier / Portfolio Router (Optional)
+
+**Files:**
+
+* `/Include/telemetry/Bridge.Copier.mqh`
+
+**Capabilities**
+
+* Mirror trades to secondary symbols/brokers (mapped lot multipliers, symbol aliases).
+* Respect per-destination **risk caps** and **latency**; skip if unsafe.
+* Independent *throttle* per destination (max orders/min).
+
+**Safety**
+
+* Copier **never** overrides the main account’s guardrails.
+* Each mirrored action journaled separately with destination tag.
+
+---
+
+## 4) Operator Controls & Consent Flow
+
+**Files:**
+
+* `/Include/telemetry/Operator.mqh`
+
+**Controls**
+
+* `EnableAutomation` (false default), `EnableSemiAuto` (false), `EnableCopier` (false).
+* `MaxDailyTrades`, `MinRRAllowed`, `MaxSlippagePoints`, `OrderTimeoutSec`.
+
+**Consent UX**
+
+* Require explicit **session consent** (reset on restart).
+* Require **per-action confirmation** unless “Trust for X minutes” is toggled (logged).
+
+---
+
+## 5) Governance, Audit & Compliance
+
+**Files:**
+
+* `/Include/telemetry/Audit.mqh`
+
+**Logging**
+
+* Every automated or semi-auto action emits `event:"override"` or `event:"execution"` with:
+
+  * `source: "guided"|"semi_auto"|"copier"`
+  * `why: "edge_case_sweep"|"breakout_continuation"|...`
+  * `risk_used`, `heat_before/after`, `guardrails_passed[]`, `declines[]`
+* **Reproducibility**: snapshot of calculators used for sizing (`calc_echo`) and telemetry hash.
+* **Backoff**: if 2 consecutive auto trades end ≤−1R each within Y minutes → **cooldown**.
+
+---
+
+## 6) Broker Abstraction & Fail-safe Modes
+
+**Files:**
+
+* `/Include/telemetry/Broker.mqh` (thin wrapper)
+
+**Abstracted ops**
+
+* `PlaceMarket`, `PlaceStop`, `PlaceLimit`, `ModifySLTP`, `CancelOrder`.
+* Unified error codes; retries with jitter; hard stop on repeated errors.
+
+**Fail-safe**
+
+* If broker errors persist → **automation auto-disables**, UI warned, journal `event:"error"` with context.
+
+---
+
+## 7) UI Tie-ins (minimal)
+
+* “Automation” panel: status badges (enabled/disabled), consent timer, kill switch.
+* Action to **promote** a suggested setup → guided order intent (pre-filled from calculators).
+* Plain warnings if any guardrail blocks the action; show *exact* reason.
+
+---
+
+# 🚦 Succinct Sprint-9 Checklist
+
+**Execution Bridges**
+
+* [ ] Guided intent handler (re-validate → place/decline)
+* [ ] Order templates (Breakout/Retest/Fade)
+* [ ] Dry-run mode; journal `"simulated": true`
+* [ ] Guardrails: NO-GOs, heat, risk clamp, slippage/latency, kill switch
+
+**Semi-Auto Triggers**
+
+* [ ] Whitelist triggers (e.g., Sweep, Breakout continuation)
+* [ ] Time-boxed pending orders with auto-cancel
+* [ ] Use strictest risk cap; no scale-ins; no widening SL
+
+**Copier/Router (optional)**
+
+* [ ] Destination mapping & multipliers
+* [ ] Per-destination latency/risk throttle
+* [ ] Separate journaling for mirrored actions
+
+**Operator Controls**
+
+* [ ] Inputs: EnableAutomation, EnableSemiAuto, EnableCopier
+* [ ] Limits: MaxDailyTrades, MinRRAllowed, MaxSlippagePoints, OrderTimeoutSec
+* [ ] Session consent & per-action confirmation paths
+
+**Audit & Governance**
+
+* [ ] Journal full context (source, why, risk\_used, guardrails\_passed/declines)
+* [ ] Telemetry hash + calc echo stamped for reproducibility
+* [ ] Cooldown after streaked losses
+* [ ] Auto-disable on repeated broker errors
+
+**Broker Abstraction**
+
+* [ ] Unified order functions with retries & error codes
+* [ ] Automation auto-disables on persistent failures
+
+**Acceptance**
+
+* [ ] Automation OFF by default; no orders without consent
+* [ ] Every automated action explainable from journal alone
+* [ ] Guardrails reliably block unsafe placements
+* [ ] Dry-run produces identical journal sans broker IDs
+* [ ] Copier obeys all caps and never bypasses controls
+
+---
+

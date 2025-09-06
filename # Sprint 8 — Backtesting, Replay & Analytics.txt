@@ -1,0 +1,99 @@
+# Sprint 8 — Backtesting, Replay & Analytics
+
+## 1) Journal Replay Engine
+
+**Purpose:** allow you (and the UI) to “re-run” past sessions.
+
+* **Replay module** (Python/JS or in-UI): read archived `journal@1.3` + `snapshot@1.3`.
+* Step forward/back through events (`orientation → setup → execution → close`).
+* Reconstruct account curve, confluence totals, edge case activations.
+* Overlay journal events on charts (candles from broker history).
+
+**Operator Impact:** see “what the EA saw” in real time; train on pattern recognition and validate discipline.
+
+---
+
+## 2) Trade Outcome Attribution
+
+**Goal:** know *why* trades win/lose.
+
+* Link journal `setup` → `fill` → `close`.
+* Record which confluence components were strong/weak.
+* Attribute PnL to engines (e.g., “trend +0.3, momentum −0.2, volume +0.4”).
+* Export CSV for research.
+
+---
+
+## 3) Statistical Analytics
+
+* Rolling distributions of R results (histogram, box plot).
+* Risk/reward scatter (R vs MAE/MFE).
+* Equity curve Monte Carlo re-shuffles (robustness test).
+* Breakdown by edge case family (Liquidity/Volatility/Sentiment).
+* Breakdown by session (Tokyo, London, NY).
+
+---
+
+## 4) Backtest Harness
+
+* **Mode A (offline)**: feed historical OHLC + tick data into EA modules (no broker connection).
+* **Mode B (journal replay)**: feed archived journals to UI (visual only).
+* Compare outputs with live EA run to validate consistency.
+* Sanity check: hard NO-GOs, risk caps, and hysteresis logic enforced in historical runs.
+
+---
+
+## 5) Performance Dashboard (extended)
+
+* Add “Analytics” tab to UI:
+
+  * **Trade stats:** Win rate, expectancy, payoff, Sharpe-like metric.
+  * **By category:** Swing vs Scalp, Edge Case families, session/time of day.
+  * **Risk efficiency:** Avg MAE vs Avg Win size.
+  * **Equity vs Heat:** track PnL vs risk budget usage.
+* Export reports (CSV, PDF).
+
+---
+
+# 🚦 Succinct Sprint-8 Checklist
+
+**Replay**
+
+* [ ] Journal replay engine reads JSONL + snapshots
+* [ ] Step-through mode shows EA’s view of market
+* [ ] UI overlays events on price charts
+
+**Attribution**
+
+* [ ] Trade chains linked (setup → fill → close)
+* [ ] Confluence component weights logged per trade
+* [ ] Attribution export to CSV
+
+**Analytics**
+
+* [ ] R distribution histograms & boxplots
+* [ ] Scatter: R vs MAE/MFE
+* [ ] Monte Carlo equity curve
+* [ ] Edge case family breakdowns
+* [ ] Session/time breakdowns
+
+**Backtest Harness**
+
+* [ ] Offline OHLC feed mode
+* [ ] Journal replay mode in UI
+* [ ] Consistency check with live logic
+
+**Performance Dashboard**
+
+* [ ] Analytics tab in UI
+* [ ] KPIs, breakdowns, risk efficiency charts
+* [ ] Export CSV/PDF
+
+**Acceptance**
+
+* [ ] Journals replay consistently reconstruct account & trades
+* [ ] Analytics match journal stats (win rate, expectancy, payoff)
+* [ ] UI allows operator to explore archives fluidly
+* [ ] Research-grade outputs reproducible
+
+---

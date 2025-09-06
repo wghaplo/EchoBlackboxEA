@@ -1,0 +1,117 @@
+# Sprint 4 — Journaling Enrichment, Performance & Robustness
+
+## 1) Journaling Enrichment
+
+**File:** `/Include/telemetry/Journal.mqh` (expanded)
+
+* Capture **MAE/MFE** per ticket, and roll up into final `close` rows.
+* Compute **bars\_held** from entry → exit.
+* Include **exit\_reason** (“stop\_hit”, “tp\_hit”, “time\_stop”, “engine\_abort”, etc.).
+* Log **override decisions** (manual triggers) explicitly with `event:"override"`.
+* Add **error context objects** (e.g., indicator failure, file IO issue).
+
+**UI impact:** Journal Explorer now shows full trade life cycle (setup → execution → maintenance → exit) with R metrics, reasons, overrides.
+
+---
+
+## 2) Performance Optimisation
+
+**Files:** All engines
+
+* **Caching/hysteresis**: ensure heavy indicators (Ichimoku, MACD, ZigZag) only recompute on new bar.
+* **Staggering**: distribute expensive engines (levels, correlation) across timer cycles instead of all at once.
+* **Fail-safes**: if any indicator fails, fall back gracefully (emit nulls, log error row).
+* **CPU budget**: measure time in `OnTimer()`; if >X ms, skip low-priority engines.
+
+**Acceptance:** EA runs 24h with CPU load ≤5% budget per cycle; no file IO stalls.
+
+---
+
+## 3) Error Handling & Recovery
+
+**Files:** EmitJson, Journal, Account
+
+* On file IO failure: retry N times, else log `event:"error"`.
+* On JSON build error: skip module, set `errors[]` in snapshot.
+* On restart: reload last `journal_index`, equity peaks, MAE/MFE caches from `/Files/state/`.
+* Add `meta.deprecated` if schema fields change; UI can display warnings.
+
+**Acceptance:** Restart/recovery yields continuous journal index, no resets.
+
+---
+
+## 4) UI Sync & Operator Feedback
+
+**Files:** EmitJson, Journal
+
+* Add `meta.health` block:
+
+  * `last_snapshot_ok`, `last_journal_ok`, `errors_pending`.
+* Add `warnings[]` for soft fails (e.g., external.news fetch timeout).
+* Add `suggestions[]` enrichment (e.g., “Daily cap breached — no new trades”).
+* Ensure **edge\_cases** always grouped by family, and UI renders them consistently.
+
+**UI impact:**
+
+* Debug/status panel shows EA health (green/yellow/red).
+* Operator sees why trades are blocked (NO-GO, heat cap, spread spike).
+
+---
+
+## 5) Governance & Compliance Hooks
+
+* Add operator input: `EnableHighRiskOverride` (default false).
+* Add operator input: `MaxDailyTrades` (enforced by Journal count).
+* Ensure all overrides logged with reason string.
+* Add `meta.governance` to snapshot (booleans: override\_allowed, heat\_cap\_ok).
+
+**Goal:** enforce “institutional discipline,” even in a personal EA.
+
+---
+
+# 🚦 Succinct Sprint-4 Checklist
+
+**Journaling**
+
+* [ ] MAE/MFE tracked per ticket
+* [ ] Bars held calculated
+* [ ] Exit reasons logged
+* [ ] Overrides logged as explicit events
+* [ ] Error events carry context objects
+
+**Performance**
+
+* [ ] Indicators cached until new bar
+* [ ] Heavy engines staggered
+* [ ] Fail-safes emit nulls instead of breaking
+* [ ] OnTimer CPU budget respected (<5%)
+
+**Error Handling & Recovery**
+
+* [ ] IO retry + error journaling
+* [ ] Schema build failures emit `errors[]` in snapshot
+* [ ] Restart reloads state (journal index, equity peaks, MAE/MFE)
+* [ ] No duplication or reset in journal index
+
+**UI Sync**
+
+* [ ] meta.health block added
+* [ ] warnings\[] used for soft errors
+* [ ] suggestions\[] enriched with governance notes
+* [ ] edge\_cases\[] always object form (family/case)
+
+**Governance**
+
+* [ ] Inputs: EnableHighRiskOverride, MaxDailyTrades
+* [ ] meta.governance booleans included
+* [ ] Overrides logged with reason
+* [ ] Daily trade caps enforced
+
+**Acceptance**
+
+* [ ] 24h run stable; journals continuous
+* [ ] Operator sees health/status in UI
+* [ ] Governance rules visibly enforced
+* [ ] No silent truncations or unexplained omissions
+
+---

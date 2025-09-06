@@ -1,0 +1,146 @@
+# Sprint 7 — UI Integration, Dashboards & Operator Experience
+
+## 1) UI Schema Sync & Validation
+
+* **Schema guards:** UI validates incoming JSON snapshots/journals against `snapshot@1.3` / `journal@1.3` schemas.
+* **Forward compatibility:** UI tolerates new optional fields (per contract).
+* **Error states:** If required blocks missing → show placeholder + warning banner.
+* **Version awareness:** If snapshot/journal schema not recognised, UI shows “unsupported schema” notice.
+
+---
+
+## 2) Orientation Dashboard
+
+* **Orientation Page**:
+
+  * Compass dial (📈=12 o’clock, ⚡=3, ♻=9, ⛔=6).
+  * Mode history strip (last N snapshots).
+  * Alignment score bar (green/red fill).
+  * Hard/Soft NO-GO chips with emoji.
+* **Operator Impact:** instantly see if the system is greenlit or blocked, and why.
+
+---
+
+## 3) Confluence Matrix (multi-timeframe grid)
+
+* Columns = Timeframes (M1, M5, M15, H1, H4).
+* Rows = Engines (Trend, Momentum, Volume, Volatility, Patterns, SR, Correlation, Session/News).
+* Each cell = score (color + emoji).
+* Total column at right = weighted total.
+* **Operator Impact:** quickly compare bias across timeframes.
+
+---
+
+## 4) Edge Cases Panel
+
+* Group by Family (Liquidity/Structure, Volatility/State, Sentiment/External).
+* Display active cases with emoji, case name, score, and conditions.
+* Show risk cap badges (0.25%, 0.50%).
+* Distinguish **opportunistic** vs **core** setups.
+
+---
+
+## 5) Account & Risk Dashboards
+
+* **Header strip (always visible):** Balance, Equity, Free Margin, Floating PnL, Heat-cap OK? (green/red badge).
+* **Account Page:**
+
+  * Equity curve + drawdown chart.
+  * Risk budget rings (daily/weekly heat).
+  * Performance KPIs (Win rate, Expectancy, Payoff, Streaks).
+* **Calculator Panel:** What-if lot sizing, RR projection, Kelly overlay.
+
+---
+
+## 6) Journal Explorer
+
+* Stream table of events (`orientation|setup|execution|fill|close|error`).
+* Filters by symbol, timeframe, event type.
+* Expand row = full JSON payload.
+* Show R metrics (MAE, MFE, final R, exit reason).
+* Link journal rows to snapshots → context view.
+
+---
+
+## 7) Sessions & News View
+
+* Session bar timeline (Tokyo, London, NY, overlaps).
+* Overlay news events (⚡📢) with impact color.
+* Highlight “news lockout” windows.
+
+---
+
+## 8) Operator Alerts
+
+* **UI notifications:**
+
+  * Mode flip (⛔→📈 etc.).
+  * Edge case activated.
+  * Heat cap breach.
+  * Override required.
+* **Delivery channels:** in-app pop-up, optional email/push integration.
+
+---
+
+# 🚦 Succinct Sprint-7 Checklist
+
+**Schema & Validation**
+
+* [ ] UI validates snapshots/journals against schema\@1.3
+* [ ] Missing required blocks show warnings
+* [ ] Schema mismatch banner if version not recognised
+
+**Orientation Dashboard**
+
+* [ ] Compass dial for mode
+* [ ] Mode history strip
+* [ ] Alignment score bar
+* [ ] Hard/Soft NO-GO chips
+
+**Confluence Matrix**
+
+* [ ] Columns = TFs
+* [ ] Rows = engines
+* [ ] Cells show scores (color + emoji)
+* [ ] Total column at right
+
+**Edge Cases Panel**
+
+* [ ] Families grouped (Liquidity, Volatility, Sentiment)
+* [ ] Cases shown with emoji, score, conditions
+* [ ] Risk cap badges visible
+
+**Account & Risk**
+
+* [ ] Header strip with balance, equity, margin, pnl, heat-cap badge
+* [ ] Equity + DD chart
+* [ ] Risk budget rings
+* [ ] KPIs panel (win rate, expectancy, payoff, streaks)
+* [ ] Lot sizer + what-if + Kelly panel
+
+**Journal Explorer**
+
+* [ ] Stream table with filters
+* [ ] Expand row shows full JSON
+* [ ] R metrics (MAE, MFE, exit reason)
+* [ ] Context link back to snapshot
+
+**Sessions & News**
+
+* [ ] Session bars + overlaps displayed
+* [ ] News events overlayed
+* [ ] Lockout windows marked
+
+**Alerts**
+
+* [ ] UI notifications for mode flips, edge cases, heat cap, overrides
+* [ ] Optional email/push integration
+
+**Acceptance**
+
+* [ ] UI fully operational with EA snapshots/journals
+* [ ] Operator sees same discipline in UI as enforced in EA
+* [ ] Alerts fire correctly
+* [ ] Schema mismatches handled gracefully
+
+---

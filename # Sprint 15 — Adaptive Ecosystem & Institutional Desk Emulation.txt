@@ -1,0 +1,118 @@
+# Sprint 15 — Adaptive Ecosystem & Institutional Desk Emulation
+
+## 1) Multi-Strategy Orchestration
+
+**Goal:** run multiple tactical “desks” inside one ecosystem.
+
+**Features**
+
+* Define **strategy groups** (Swing, Scalp, Edge Cases, Research Hypotheses).
+* Each group has its own risk budget, confluence weights, and schedule.
+* Global Orchestrator allocates trades between groups based on performance.
+* Snapshots/journals expanded with `"strategy_group":"Swing"` field.
+* Operator can toggle groups on/off mid-session.
+
+---
+
+## 2) Adaptive Ecosystem Learning
+
+**Goal:** the system tunes itself over long horizons.
+
+**Features**
+
+* Weekly research cycle:
+
+  * Export stats for all groups.
+  * Identify underperforming engines.
+  * Suggest weight changes (e.g., lower momentum weight if weak).
+* Operator receives `event:"ecosystem_suggestion"` journal entries.
+* Suggestions advisory-only; must be accepted in UI to apply.
+
+---
+
+## 3) Meta-Research Layer
+
+**Goal:** institutional-style “desk research archive.”
+
+**Features**
+
+* `/docs/research/` grows into a **catalogue of tested edges**:
+
+  * Each edge stored with: name, conditions, stats, activation frequency, ROI.
+  * Linked directly to journal evidence.
+* UI “Research Library” tab lets operators browse, filter, and tag edges.
+* Hypotheses evolve into confirmed strategies over time.
+
+---
+
+## 4) Institutional Desk Simulation
+
+**Goal:** emulate how a professional desk allocates capital & risk.
+
+**Features**
+
+* Heat budget split across groups (Swing 40%, Scalp 30%, Edge 20%, Research 10%).
+* Risk dynamically rebalanced weekly based on Sharpe-like ratios.
+* Journal `event:"allocation_change"` rows record adjustments.
+* UI displays allocation rings & capital flows between strategies.
+
+---
+
+## 5) Long-Term Governance & Resilience
+
+**Goal:** ensure stability over years, not just weeks.
+
+**Features**
+
+* Automatic archive pruning & compression (old journals rotated into yearly archives).
+* Equity curve tracking across years.
+* Governance review cycle every 90 days — journal `event:"governance_review"`.
+* Self-diagnostics to warn of obsolescence (e.g., schema drift, stale playbooks).
+
+---
+
+# 🚦 Succinct Sprint-15 Checklist
+
+**Multi-Strategy**
+
+* [ ] Strategy groups defined with separate budgets
+* [ ] Global Orchestrator allocates across groups
+* [ ] Snapshots/journals include strategy\_group tag
+* [ ] Operator toggle groups in UI
+
+**Adaptive Ecosystem**
+
+* [ ] Weekly research cycle exports performance
+* [ ] Weight adjustments suggested
+* [ ] Suggestions logged as ecosystem\_suggestion events
+* [ ] Operator approval required
+
+**Meta-Research**
+
+* [ ] Edges catalogued in /docs/research/
+* [ ] Each edge linked to journal evidence
+* [ ] UI Research Library tab live
+
+**Desk Simulation**
+
+* [ ] Risk allocation split across groups
+* [ ] Weekly rebalance based on performance ratios
+* [ ] Allocation changes journalled
+* [ ] UI allocation rings shown
+
+**Governance/Resilience**
+
+* [ ] Journal archives rotated yearly
+* [ ] Equity tracked across long horizon
+* [ ] Governance reviews journalled quarterly
+* [ ] Self-diagnostics flag stale schemas/playbooks
+
+**Acceptance**
+
+* [ ] Multiple strategy groups orchestrated seamlessly
+* [ ] Ecosystem self-tunes with operator approval
+* [ ] Research library grows over time with evidence
+* [ ] Institutional-style allocation visible in UI
+* [ ] System resilient & transparent over years
+
+---

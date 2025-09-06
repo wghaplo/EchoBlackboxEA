@@ -1,0 +1,240 @@
+# Sprint 1 — Telemetry Heartbeat
+
+## 1) Scaffold the EA shell
+
+**File:** `MQL5/Experts/EchoBlackboxEA.mq5`
+**Goal:** compile-clean skeleton with lifecycle + timer.
+
+**Must-have handlers**
+
+* `int OnInit()`
+
+  * Load inputs (cadence, schema strings, paths).
+  * Set `EventSetTimer(UpdateIntervalSec)`.
+  * Call `SelfTest_Init()` (see §3).
+* `void OnDeinit(const int reason)`
+
+  * `EventKillTimer()`.
+  * Flush any buffered journal lines (if you implement a small buffer).
+* `void OnTimer()`
+
+  * Compute minimal snapshot payload (meta + orientation placeholder + basic indicators + account).
+  * Call `EmitSnapshot()` (atomic write).
+* `void OnTradeTransaction(...)`
+
+  * On `TRADE_TRANSACTION_DEAL_*` and `*_ORDER_*`: append a `journal@1.3` row.
+
+**Inputs (examples)**
+
+```mql5
+input int    UpdateIntervalSec = 10;
+input string SnapshotSchema     = "snapshot@1.3";
+input string JournalSchema      = "journal@1.3";
+input string OutDir             = "ui";
+input string JournalDir         = "journal";
+```
+
+---
+
+## 2) JSON writers: EmitJson + Journal
+
+**Files:**
+
+* `/Include/telemetry/EmitJson.mqh`
+* `/Include/telemetry/Journal.mqh`
+
+### EmitJson.mqh
+
+**Responsibilities**
+
+* Build a `snapshot@1.3` object with these minimum blocks:
+
+  * `meta{symbol,timeframe,timestamp,schema,version}`
+  * `orientation{mode: "⛔" | "📈" | "⚡" | "♻", alignment_score, hard_nogo[], soft_nogo[]}` (placeholder allowed now)
+  * `confluence{total:0, components:{}}` (stub)
+  * `indicators{Trend:{ADX,RSI}, Volatility:{ATR,Spread}}`
+  * `account{balance,equity,margin,free_margin,floating_pnl}`
+  * `edge_cases: []` (empty for now)
+* **Atomic write**:
+
+  1. write to `<path>.tmp`
+  2. `FileFlush()` + `FileClose()`
+  3. `FileMove(tmp, final, FILE_REWRITE)`
+* Pretty JSON not required; compact is OK. Ensure UTF-8 and proper escaping.
+
+**Utility helpers**
+
+* `string Iso8601NowUtc()`
+* `bool EnsureDir(string relPath)` (create subfolders under `MQL5/Files`)
+* `string BuildSnapshotPath(string symbol, ENUM_TIMEFRAMES tf)`
+
+### Journal.mqh
+
+**Responsibilities**
+
+* Maintain `journal_index` (monotonic; persist in `/Files/state/journal_index.txt`).
+* Append JSONL rows:
+
+  * `event:"orientation"` on each timer cycle (small row OK).
+  * `event:"order"|"fill"|"update"|"close"` inside `OnTradeTransaction`.
+  * `event:"error"` when any module throws or returns invalid data.
+* **Rotation**: open `/Files/journal/journal_YYYY-MM-DD.jsonl` (if day changes, open a new file).
+* **Append discipline**: open/append/close per line (safe), or keep a handle but flush each write.
+
+---
+
+## 3) EmojiMap + Self-test
+
+**File:** `/Include/telemetry/EmojiMap.mqh`
+
+* Load `/Files/emoji_dictionary.json` once in `OnInit`.
+* Provide `string EmojiFor(string name, string fallback="")`.
+* If file missing or bad, set a fallback mode (`:tag:` strings) and emit a `journal error` row.
+
+**Self-test (`SelfTest_Init()` in EA)**
+
+* Check: schema strings not empty; output dirs creatable; `emoji_dictionary.json` load ok.
+* Probe indicators for current symbol/timeframe (create & release handles).
+* Log a single `event:"orientation"` row with `"config_init": true` so we know heartbeat is live.
+
+---
+
+## 4) Indicators (light, cached)
+
+**File:** `/Include/telemetry/Indicators.mqh`
+
+* Provide minimal getters that **cache until a new bar**:
+
+  * `double GetADX(int period=28)`
+  * `double GetRSI(int period=14)`
+  * `double GetATR(int period=14)`
+  * `double GetStdDev(int period=20)`
+  * `double GetSpreadSMA(int len=20)` (compute from `SymbolInfoInteger(SPREAD)` over last N timer ticks; or approximate from tick data if available)
+* Use a tiny struct holding: last `datetime lastBarTime`, last computed values, and `RefreshOnNewBar()` to recompute.
+
+---
+
+## 5) Orientation hysteresis (placeholder logic)
+
+* Implement a simple **mode state machine** with hysteresis inputs:
+
+  * `ModeHoldBars_Swing = 3`
+  * `ModeHoldTicks_Scalp = 5`
+* For Sprint 1, set:
+
+  * If `ADX >= 25 && ATR rising` → candidate `📈` else if `ATR high && ADX < 25` → candidate `⚡` else → `⛔`.
+  * Maintain `mode` only if candidate persists for required *bars/ticks*; otherwise keep current mode.
+* Output `orientation.mode` and `alignment_score` (stub 0..1), `hard_nogo[]` (empty for now).
+
+---
+
+## 6) Paths, rotation, and safety
+
+* **Paths**:
+
+  * Snapshot: `MQL5/Files/ui/<SYMBOL>_<TF>_telemetry.json`
+  * Journal:  `MQL5/Files/journal/journal_YYYY-MM-DD.jsonl`
+  * State:    `MQL5/Files/state/journal_index.txt`
+* **Rotation**: key off **date** at write time; if day changes, start a new JSONL file.
+* **Safety**:
+
+  * Wrap all file IO in try/catch style with return checking; on failure, append `event:"error"` rows.
+  * Use *only* ASCII file names; JSON payload is UTF-8.
+
+---
+
+## 7) Testing & acceptance (Sprint-1)
+
+**Compile & run**
+
+* EA compiles with no warnings (or only benign MT5 ones).
+* Attach on a chart; verify:
+
+  * `ui/` contains a fresh `*_telemetry.json` (updates every `UpdateIntervalSec`).
+  * `journal/` contains `journal_YYYY-MM-DD.jsonl` with `orientation` rows.
+* Validate schema:
+
+  * `snapshot.schema == "snapshot@1.3"`
+  * `journal.schema  == "journal@1.3"`
+  * Required blocks exist (per UI contract).
+* **Atomic write check**:
+
+  * Temporarily slow down `EmitSnapshot()` and verify no half-written JSON appears.
+* **Hysteresis smoke test**:
+
+  * Manually tweak placeholder mode logic thresholds and observe mode changes occur only after hold counts.
+* **Error path**:
+
+  * Rename `emoji_dictionary.json` → run → confirm `event:"error"` row logs graceful fallback.
+
+---
+
+# Common pitfalls (avoid early pain)
+
+* **Partial JSON writes**: never write directly to final file; always temp → rename.
+* **Timezones**: emit `timestamp` in **UTC**; put any server time in `sessions.server_time_utc`.
+* **Heavy recomputation**: cache indicators until a new bar; stagger costly calculations if you add any.
+* **Journal flooding**: avoid per-tick logs—use timer cadence and trade events only.
+* **String escaping**: escape quotes in JSON; prefer number types for numeric fields.
+
+---
+
+# Deliverable (end of Sprint-1)
+
+* A compiling EA that:
+
+  * Emits **valid** `snapshot@1.3` every `UpdateIntervalSec`.
+  * Appends `journal@1.3` rows (`orientation`, plus trade events if any occur).
+  * Shows stable cadence; no auto-trading actions performed.
+
+---
+
+# 🔎 Succinct Sprint-1 checklist
+
+**EA shell**
+
+* [ ] `OnInit/OnDeinit/OnTimer/OnTradeTransaction` implemented
+* [ ] Timer set from `UpdateIntervalSec`
+
+**Writers**
+
+* [ ] `EmitSnapshot()` (atomic tmp→rename)
+* [ ] `AppendJournalLine()` with rotation + `journal_index`
+* [ ] Schema stamps: `snapshot@1.3` / `journal@1.3`
+
+**Data blocks (minimum)**
+
+* [ ] `meta{symbol,timeframe,timestamp,schema,version}`
+* [ ] `orientation{mode, alignment_score, hard_nogo[], soft_nogo[]}` (placeholder ok)
+* [ ] `confluence{total, components{}}` (stub ok)
+* [ ] `indicators{Trend:{ADX,RSI}, Volatility:{ATR,Spread}}`
+* [ ] `account{balance,equity,margin,free_margin,floating_pnl}`
+* [ ] `edge_cases: []` (empty)
+
+**Emoji & self-test**
+
+* [ ] `emoji_dictionary.json` loaded; fallback if missing
+* [ ] `config_init` journal row written on startup
+
+**Indicators & caching**
+
+* [ ] ADX/RSI/ATR/StdDev cached until new bar
+* [ ] StdDev listed in roadmap, but stubbed (explicitly allowed for Sprint-1)  
+* [ ] Spread baseline maintained (SMA or simple average)
+
+**Hysteresis**
+
+* [ ] Mode held for N bars/ticks before flip
+* [ ] Placeholder logic gates `📈`/`⚡`/`⛔`
+
+**Filesystem**
+
+* [ ] `ui/` and `journal/` created under `MQL5/Files/`
+* [ ] Daily rotation tested
+* [ ] Absolute paths logged on init
+
+**Acceptance**
+
+* [ ] Snapshot validates (required fields present; correct schema tags)
+* [ ] Journal appends sequentially with monotonic `journal_index`
+* [ ] No crashes; error events logged when simulated faults occur

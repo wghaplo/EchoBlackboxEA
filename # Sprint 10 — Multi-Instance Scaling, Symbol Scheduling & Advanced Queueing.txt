@@ -1,0 +1,107 @@
+# Sprint 10 — Multi-Instance Scaling, Symbol Scheduling & Advanced Queueing
+
+## 1) Multi-Instance Scaling
+
+**Goal:** allow Echo Blackbox to handle multiple symbols/timeframes under one coordinated framework.
+
+**Features**
+
+* Central **Orchestrator** sweeps through `SymbolsTimeframes[]` (from CONFIG\_DEFAULTS).
+* Writes separate snapshot JSON per symbol/TF → `ui/<SYMBOL>_<TF>_telemetry.json`.
+* Maintains a **single journal JSONL** with per-event `symbol` + `tf` fields.
+* Enforces **shared risk/heat caps** across all symbols (e.g., 3R/day global, not per symbol).
+* Detects duplicate EA instances on the same account (optional safety warning).
+
+---
+
+## 2) Symbol Scheduler
+
+**Goal:** avoid CPU overload when tracking many instruments.
+
+**Features**
+
+* Configurable **priority tiers**:
+
+  * Tier 1 (majors, XAUUSD): update every 10s.
+  * Tier 2 (crosses): update every 30s.
+  * Tier 3 (exotics): update every 60–300s.
+* Configurable in `CONFIG_DEFAULTS` or external JSON manifest.
+* Snapshots stamped with `meta.scheduled=true` and `meta.update_interval`.
+* UI can show next update countdown per symbol.
+
+---
+
+## 3) Advanced Queueing
+
+**Goal:** manage computational workload safely under CPU/time budget.
+
+**Features**
+
+* Lightweight **Task Queue** for all modules (indicators, levels, correlation, patterns, journaling).
+* Each task has `priority` (high/med/low) and `budget_ms`.
+* Dispatcher runs tasks until cycle time budget (e.g., 200ms).
+* If budget exceeded → defer low-priority tasks to next cycle.
+* Logs skipped/deferred tasks to `meta.health.tasks[]` in snapshot.
+* Critical tasks (snapshot writing, journal append) always executed.
+
+---
+
+## 4) UI Integration
+
+* New **System Health panel**:
+
+  * Symbols tracked, their update cadence.
+  * Task queue status: % of tasks executed vs skipped.
+  * CPU/time usage bar.
+* Operator can see if EA is “keeping up” or if load shedding is happening.
+
+---
+
+## 5) Testing & Acceptance
+
+* Backtest with 10+ symbols active.
+* Validate:
+
+  * Each symbol gets snapshots at its cadence.
+  * Combined journal monotonic, schema intact, per-row symbol tagged.
+  * Heat/risk applied globally across all positions.
+  * CPU load remains stable (<5% per cycle).
+* Stress test: overload queue → confirm low-priority modules defer, logs show skip reason, no crashes.
+
+---
+
+# 🚦 Succinct Sprint-10 Checklist
+
+**Multi-Instance**
+
+* [ ] Orchestrator sweeps multiple symbols/TFs
+* [ ] Snapshots written per symbol/TF
+* [ ] Journal unified, symbol tagged
+* [ ] Shared risk/heat enforced
+
+**Symbol Scheduler**
+
+* [ ] Priority tiers defined in CONFIG
+* [ ] Cadence respected (10s/30s/60–300s)
+* [ ] Snapshots stamped with update info
+
+**Queueing**
+
+* [ ] Task queue with priority lanes
+* [ ] Cycle budget enforced
+* [ ] Deferred tasks logged in `meta.health.tasks[]`
+* [ ] Critical tasks always run
+
+**UI**
+
+* [ ] Health panel: symbol cadences, queue status, CPU/time usage
+* [ ] Operator sees when tasks skipped or delayed
+
+**Acceptance**
+
+* [ ] 10+ symbols stable, no missed critical telemetry
+* [ ] Journal continuous and consistent
+* [ ] Risk global across all positions
+* [ ] CPU load < threshold, graceful load shedding
+
+---
